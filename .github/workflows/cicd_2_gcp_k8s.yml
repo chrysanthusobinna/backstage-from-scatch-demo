@@ -1,5 +1,4 @@
-# cicd_2_gcp_k8s.yml - This GitHub Actions workflow is designed to automate the CI/CD process for a Backstage application. It consists of two main jobs: "build" and "deploy". The "build" job compiles the TypeScript code, runs unit tests, and builds the application. The "deploy" job authenticates with Google Cloud, builds a Docker image, pushes it to Google Container Registry, and deploys it to a Kubernetes cluster on GCP. The workflow is triggered on pushes and pull requests to the "k8s" branch.
-# This workflow runs a set of yarn commands to compile, test and build a backstage application 
+# cicd_2_gcp_k8s.yml
 name: ci-cd to k8s
 
 permissions:
@@ -17,8 +16,6 @@ env:
   REPO: backstage-from-scatch-demo
   IMAGE: backstage
 
-
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,13 +28,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      
+
       - name: Install Dependencies
-        run: yarn install  
+        run: yarn install
 
       - name: Compile TypeScript
         run: yarn tsc
-
 
       - name: Run Unit Tests
         run: yarn test:all
@@ -45,33 +41,29 @@ jobs:
       - name: Build the application
         run: yarn build:all
 
-      # Ensure that the generated files are in the right place before the deploy step
       - name: Ensure Build Artifacts are Present
         run: |
           ls packages/backend/dist/
           echo "Artifacts: skeleton.tar.gz and bundle.tar.gz should be present"
-# =========================
-# CD — DEPLOY TO GCP VM
-# =========================
 
   deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      
+
       - name: Install Dependencies
-        run: yarn install  
+        run: yarn install
 
       - name: Build the application
         run: yarn build:all
- 
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -79,26 +71,17 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up gcloud CLI
-      - uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Install GKE auth plugin
         run: |
           gcloud components install gke-gcloud-auth-plugin --quiet
 
-      - name: Configure Docker for GCR
+      - name: Configure Docker for Artifact Registry
         run: |
           gcloud auth configure-docker ${{ secrets.GKE_REGION }}-docker.pkg.dev
 
-      - name: Build image
-        run: |
-          # Check if the files are there before the build
-          ls packages/backend/dist/
-          echo "Building Docker image..." 
-          docker build --no-cache \
-          -t ${{ secrets.GKE_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$REPO/$IMAGE:$GITHUB_SHA \
-          -f packages/backend/Dockerfile .
-
-      - name: Create GCR Repository if it doesn't exist
+      - name: Create Artifact Registry Repository if it doesn't exist
         run: |
           gcloud artifacts repositories describe $REPO \
             --project=${{ secrets.GCP_PROJECT_ID }} \
@@ -108,17 +91,23 @@ jobs:
             --location=${{ secrets.GKE_REGION }} \
             --project=${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Push image to GCR
+      - name: Build image
+        run: |
+          ls packages/backend/dist/
+          echo "Building Docker image..."
+          docker build --no-cache \
+            -t ${{ secrets.GKE_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$REPO/$IMAGE:$GITHUB_SHA \
+            -f packages/backend/Dockerfile .
+
+      - name: Push image to Artifact Registry
         run: |
           docker push ${{ secrets.GKE_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$REPO/$IMAGE:$GITHUB_SHA
-
 
       - name: Get GKE Cluster credentials
         run: |
           gcloud container clusters get-credentials \
-          ${{ secrets.GKE_CLUSTER }} \
-          --region ${{ secrets.GKE_REGION }}
-
+            ${{ secrets.GKE_CLUSTER }} \
+            --region ${{ secrets.GKE_REGION }}
 
       - name: Deploy to Kubernetes
         run: |
@@ -127,8 +116,8 @@ jobs:
           kubectl apply -f k8s/
 
           kubectl set image deployment/backstage \
-          backstage=${{ secrets.GKE_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$REPO/$IMAGE:$GITHUB_SHA \
-          -n backstage
+            backstage=${{ secrets.GKE_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$REPO/$IMAGE:$GITHUB_SHA \
+            -n backstage
 
           echo "kubectl get pods -n backstage..."
           kubectl get pods -n backstage
