@@ -1,7 +1,7 @@
 # app-config.yaml - This is the main configuration file for your Backstage app. It contains settings for the app itself, as well as for plugins and integrations. You can override these settings in environment-specific files like app-config.production.yaml.
 app:
   title: Scaffolded Backstage App
-  baseUrl: http://34.53.95.134
+  baseUrl: http://34.127.79.233
   # baseUrl: http://0.0.0.0:3000
 
 organization:
@@ -14,7 +14,7 @@ backend:
   # auth:
   #   keys:
   #     - secret: ${BACKEND_SECRET}
-  baseUrl: http://34.53.95.134
+  baseUrl: http://34.127.79.233
   # baseUrl: http://0.0.0.0:7007
   listen:
     port: 7007
@@ -28,7 +28,7 @@ backend:
   cors:
     origin: "*"
     # origin: http://0.0.0.0:3000
-    # origin: http://34.53.95.134
+    # origin: http://34.127.79.233
     methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
     credentials: true
   # This is for local development only, it is not recommended to use this in production
