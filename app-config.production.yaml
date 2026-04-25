@@ -17,6 +17,8 @@ backend:
   listen:
     host: 0.0.0.0
     port: 7007
+  auth:
+    dangerouslyDisableDefaultAuthPolicy: true
   csp:
     upgrade-insecure-requests: false
     connect-src: ["'self'", 'http:', 'https:']
