@@ -3,7 +3,7 @@
 This is your newly scaffolded Backstage App, Good Luck!
 
 To start the app, run the following on the terminal
-
+ 
 ```sh
 yarn install
 yarn test:all
