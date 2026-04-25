@@ -12,7 +12,7 @@ yarn start
 yarn build:backend
 yarn build:all
 ```
-
+ 
 ## First set of git commands = from git init to push the first time 
 
 ```bash
